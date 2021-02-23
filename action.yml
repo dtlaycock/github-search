@@ -1,0 +1,26 @@
+name: Github Search
+
+description: Search for files on Github
+
+inputs:
+  access-token:
+    description: Token with permissions to read all the organization's repos
+    required: true
+  filename:
+    description: Filename to search for
+  extension:
+    description: An extension to search for
+  path:
+    description: Folder structure to search within
+  org:
+    description: The Github Organization within which to search
+  user:
+    description: Search within the specified users repositories
+
+runs:
+  using: node12
+  main: main.js
+
+branding:
+  icon: search
+  color: purple
