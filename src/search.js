@@ -30,7 +30,7 @@ function getSearchString() {
   return searchString;
 }
 
-function searchCode(searchString) {
+async function searchCode(searchString) {
   const token = core.getInput("access-token");
   if (!token) {
     throw new Error('Token must be specified');

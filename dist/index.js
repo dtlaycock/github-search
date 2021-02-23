@@ -634,19 +634,19 @@ function getSearchString() {
   return searchString;
 }
 
-function searchCode(searchString) {
+async function searchCode(searchString) {
   const token = core.getInput("access-token");
   if (!token) {
     throw new Error('Token must be specified');
   }    
   const octokit = github.getOctokit(token);
-  const results = octokit.search.code({
-    q: searchString
-  }).catch(error => {
-    throw new Error(error);
-  });
+  const { data } = await octokit.search.code({ q: searchString });
+  if (!data || data.total_count === 0) {
+    console.log(`No results found for ${searchString}`);
+    return null;
+  }
 
-  return sortResults(results.data.items);
+  return data;
 }
 
 function sortResults(items) {
@@ -6000,15 +6000,17 @@ const search = __webpack_require__(21);
 async function run() {
   try {
     const searchString = search.getSearchString();
-	  const items = await search.searchCode(searchString);
+	  const data = await search.searchCode(searchString);
 
-    for (const result of items) {
+    console.log(`${data.total_count} results`);
+    core.setOutput("ResultsCount", data.total_count);
+    for (const result of data.items) {
       console.log(`Repository: ${result.repository.name} filename:${result.name}`)
       core.setOutput("Filename", result.name);
       core.setOutput("Repository", result.repository.name);
     }
   } catch (err) {
-      core.setFailed(err.message);
+    core.setFailed(err.message);
   }
 }
 
