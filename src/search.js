@@ -36,13 +36,13 @@ function searchCode(searchString) {
     throw new Error('Token must be specified');
   }    
   const octokit = github.getOctokit(token);
-  const results = octokit.search.code({
-    q: searchString
-  }).catch(error => {
-    throw new Error(error);
-  });
+  const { data } = await octokit.search.code({ q: searchString });
+  if (!data || data.total_count === 0) {
+    console.log(`No results found for ${searchString}`);
+    return null;
+  }
 
-  return sortResults(results.data.items);
+  return data;
 }
 
 function sortResults(items) {
