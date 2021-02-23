@@ -4,23 +4,23 @@ This action searches for files across repositories.
 
 ## Inputs
 
-### `Token`
+### `input-token`
 
 **Required** The token will determine what repositories you have access to search. More details on how to create a Personal Access Token
 
-### `Filename`
+### `filename`
 A complete filename can be specified or a fragment.
 
-### `Extension`
+### `extension`
 Search for all files that have a particular extension.
 
-### `Path`
+### `path`
 Limit the search to a particular path.
 
-### `Org`
+### `org`
 Search repositories within a the specified organization.
 
-### `User`
+### `user`
 Limit the search to repositories owned by a particular user.
 
 ## Usage
