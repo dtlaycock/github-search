@@ -4,8 +4,7 @@ const search = require('./search.js');
 async function run() {
   try {
     const searchString = search.getSearchString();
-
-	  let items = await search.getSearchResults(searchString);
+	  const items = await search.searchCode(searchString);
 
     for (const result of items) {
       console.log(`Repository: ${result.repository.name} filename:${result.name}`)
