@@ -1,9 +1,15 @@
-const core = require('@actions/core');
 jest.mock('@actions/core');
+jest.mock('@actions/github');
+const core = require('@actions/core');
+const github = require('@actions/github');
 const { when } = require('jest-when');
 const search = require('../src/search.js');
 
 describe('Ensure the search string matches the input parameters', () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('Run with no input params and it should fail', () => {
     expect(() => { search.getSearchString() }).toThrow("Filename or Extension must be specified")
   });
@@ -12,7 +18,7 @@ describe('Ensure the search string matches the input parameters', () => {
     const inputs = {'filename': 'ci.yml'};
     setInputs(inputs);
     const expected = getExpected(inputs);
-    
+
     const actual = search.getSearchString();
 
     expect(actual).toEqual(expected);
@@ -22,9 +28,9 @@ describe('Ensure the search string matches the input parameters', () => {
     const inputs = {'extension': 'yml'};
     setInputs(inputs);
     const expected = getExpected(inputs);
-    
+
     const actual = search.getSearchString();
-    
+
     expect(actual).toEqual(expected);
   });
 
@@ -32,9 +38,9 @@ describe('Ensure the search string matches the input parameters', () => {
     const inputs = {'filename': 'ci.yml', 'path': '.github/workflows'};
     setInputs(inputs);
     const expected = getExpected(inputs);
-    
+
     const actual = search.getSearchString();
-    
+
     expect(actual).toEqual(expected);
   });
 
@@ -42,9 +48,9 @@ describe('Ensure the search string matches the input parameters', () => {
     const inputs = {'filename': 'ci.yml', 'org': 'myOrg'};
     setInputs(inputs);
     const expected = getExpected(inputs);
-    
+
     const actual = search.getSearchString();
-    
+
     expect(actual).toEqual(expected);
   });
 
@@ -52,9 +58,9 @@ describe('Ensure the search string matches the input parameters', () => {
     const inputs = {'filename': 'ci.yml', 'user': 'dtlaycock'};
     setInputs(inputs);
     const expected = getExpected(inputs);
-    
+
     const actual = search.getSearchString();
-    
+
     expect(actual).toEqual(expected);
   });
 
@@ -62,9 +68,9 @@ describe('Ensure the search string matches the input parameters', () => {
     const inputs = {'filename': 'ci.yml', 'org': 'myOrg', 'user': 'dtlaycock'};
     setInputs(inputs);
     const expected = getExpected(inputs);
-    
+
     const actual = search.getSearchString();
-    
+
     expect(actual).toEqual(expected);
   });
 
@@ -72,9 +78,9 @@ describe('Ensure the search string matches the input parameters', () => {
     const inputs = {'filename': 'ci.yml', 'path': '.github/workflows', 'org': 'myOrg', 'user': 'dtlaycock'};
     setInputs(inputs);
     const expected = getExpected(inputs);
-    
+
     const actual = search.getSearchString();
-    
+
     expect(actual).toEqual(expected);
   });
 });
@@ -89,6 +95,7 @@ function setInputs(inputs = {}) {
 }
 
 function getExpected(inputs = {}) {
+  // Generates the query string in key:value format e.g. path:.github/workflows+org:myOrg
   return Object.keys(inputs).map((key) => [key, inputs[key]].join(':')).join('+');
 }
 
@@ -106,3 +113,42 @@ describe('Search results should be grouped by repository', () => {
     expect(actual).toEqual(expected);
   });
 })
+
+describe('SearchCode should return the total number of results', () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+  it('Search fails if token is not input', async () => {
+    core.getInput.mockReturnValueOnce('');
+    search.searchCode('Fake search string error expected');
+    expect(core.setFailed).toHaveBeenCalledWith('Access Token must be specified')
+  });
+  it('Search works if token is available', async () => {
+    core.getInput.mockReturnValueOnce('fake-valid-token');
+    actual = search.searchCode('Fake search string error expected');
+
+    expect(github.getOctokit).toHaveBeenCalledTimes(1);
+  });
+  it('Total items matches returned item count for search that returns less than 100 results', async () => {
+    // Arrange
+    const StubOctokit = {
+      search: {
+        code: jest.fn()
+      }
+    }
+    const fakeResponse = {
+      data: {
+        total_count: 4
+      }
+    }
+    StubOctokit.search.code.mockReturnValueOnce(fakeResponse);
+    github.getOctokit.mockReturnValueOnce(StubOctokit);
+    core.getInput.mockReturnValueOnce('fake-valid-token');
+
+    // Act
+    const actual = await search.searchCode('filename:test.yml');
+
+    // Assert
+    expect(actual).toEqual(fakeResponse.data);
+  });
+});
