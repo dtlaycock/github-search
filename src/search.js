@@ -37,7 +37,7 @@ async function searchCode(searchString) {
       throw new Error('Access Token must be specified');
     }
     const octokit = github.getOctokit(token);
-    const { data } = await octokit.search.code({ q: searchString });
+    const data = await octokit.paginate(octokit.search.code, { q: searchString });
 
     if (!data || data.total_count === 0) {
       console.log(`No results found for ${searchString}`);
