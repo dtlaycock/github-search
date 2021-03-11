@@ -31,18 +31,24 @@ function getSearchString() {
 }
 
 async function searchCode(searchString) {
-  const token = core.getInput("access-token");
-  if (!token) {
-    throw new Error('Token must be specified');
-  }    
-  const octokit = github.getOctokit(token);
-  const { data } = await octokit.search.code({ q: searchString });
-  if (!data || data.total_count === 0) {
-    console.log(`No results found for ${searchString}`);
-    return null;
+  try {
+    const token = core.getInput("access-token");
+    if (!token) {
+      throw new Error('Access Token must be specified');
+    }
+    const octokit = github.getOctokit(token);
+    const data = await octokit.paginate(octokit.search.code, { q: searchString });
+
+    if (!data || data.total_count === 0) {
+      console.log(`No results found for ${searchString}`);
+      return null;
+    }
+
+    return data;
+  } catch (error) {
+    core.setFailed(error.message);
   }
 
-  return data;
 }
 
 function sortResults(items) {
